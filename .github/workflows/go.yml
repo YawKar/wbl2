@@ -1,0 +1,41 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Go
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21.5'
+    
+    - name: Setup workspace
+      run: go work init
+
+    - name: Add all modules to workspace
+      run: go work use -r .
+    
+    - name: Build patterns
+      run: go build -v ./patterns/**
+
+    - name: Build dev challenges
+      run: go build -v ./dev_challenges/**
+
+    - name: Build spoken tasks
+      run: go build -v ./spoken_tasks/**
+
+    - name: Test dev challenges
+      run: go test -race -v ./dev_challenges/**
+
