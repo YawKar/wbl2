@@ -3,5 +3,12 @@
 	"image": "mcr.microsoft.com/devcontainers/base:jammy",
 	"features": {
 		"ghcr.io/devcontainers/features/go:1": {}
+	},
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"go.lintTool": "golangci-lint"
+			}
+		}
 	}
 }
