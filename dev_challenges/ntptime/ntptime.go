@@ -21,7 +21,7 @@ func main() {
 	response, err := ntp.QueryWithOptions(*ntpAddress, options)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
-		return
+		os.Exit(1)
 	}
 	time := time.Now().Add(response.ClockOffset)
 	fmt.Println(time)
