@@ -26,8 +26,20 @@ jobs:
       - name: Add all modules to workspace
         run: go work use -r .
 
+      - name: Lint patterns
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.55
+          args: patterns/*
+
       - name: Lint dev_challenges
         uses: golangci/golangci-lint-action@v3
         with:
           version: v1.55
           args: dev_challenges/*
+
+      - name: Lint spoken_tasks
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.55
+          args: spoken_tasks/*
