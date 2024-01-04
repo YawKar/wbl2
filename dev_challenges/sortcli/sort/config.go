@@ -20,9 +20,5 @@ type OtherOptions struct {
 }
 
 type SortKey struct {
-	StartField int
-	StartChar  int
-	StartOpts  *OrderingOptions
-	EndField   int
-	EndChar    int
+	TargetField int
 }

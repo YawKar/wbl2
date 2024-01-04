@@ -15,10 +15,7 @@ import (
 	"testing"
 )
 
-const (
-	APPNAME  = "sort"
-	TESTDATA = "testdata/"
-)
+const TESTDATA = "testdata/"
 
 //go:embed testdata
 var tdRoot embed.FS
@@ -40,6 +37,14 @@ var (
 	tdRNS []fs.DirEntry
 	// numeric unique sorted samples
 	tdNUS []fs.DirEntry
+	// k1 sorted samples
+	tdK1S []fs.DirEntry
+	// k2 sorted samples
+	tdK2S []fs.DirEntry
+	// k3 sorted samples
+	tdK3S []fs.DirEntry
+	// k4 sorted samples
+	tdK4S []fs.DirEntry
 )
 
 // Read basic sample
@@ -82,6 +87,26 @@ func readNUS(name string) ([]byte, error) {
 	return tdRoot.ReadFile(TESTDATA + "numeric_unique_sorted_samples/" + name)
 }
 
+// Read k1 sorted sample
+func readK1S(name string) ([]byte, error) {
+	return tdRoot.ReadFile(TESTDATA + "k1_sorted_samples/" + name)
+}
+
+// Read k2 sorted sample
+func readK2S(name string) ([]byte, error) {
+	return tdRoot.ReadFile(TESTDATA + "k2_sorted_samples/" + name)
+}
+
+// Read k3 sorted sample
+func readK3S(name string) ([]byte, error) {
+	return tdRoot.ReadFile(TESTDATA + "k3_sorted_samples/" + name)
+}
+
+// Read k4 sorted sample
+func readK4S(name string) ([]byte, error) {
+	return tdRoot.ReadFile(TESTDATA + "k4_sorted_samples/" + name)
+}
+
 func init() {
 	setupSamples()
 }
@@ -117,6 +142,22 @@ func setupSamples() {
 		panic(err)
 	}
 	tdNUS, err = tdRoot.ReadDir("testdata/numeric_unique_sorted_samples")
+	if err != nil {
+		panic(err)
+	}
+	tdK1S, err = tdRoot.ReadDir("testdata/k1_sorted_samples")
+	if err != nil {
+		panic(err)
+	}
+	tdK2S, err = tdRoot.ReadDir("testdata/k2_sorted_samples")
+	if err != nil {
+		panic(err)
+	}
+	tdK3S, err = tdRoot.ReadDir("testdata/k3_sorted_samples")
+	if err != nil {
+		panic(err)
+	}
+	tdK4S, err = tdRoot.ReadDir("testdata/k4_sorted_samples")
 	if err != nil {
 		panic(err)
 	}
@@ -262,86 +303,42 @@ func TestNUS(t *testing.T) {
 	}
 }
 
-func TestJS(t *testing.T) {
-	for _, entry := range tdS {
-		content, err := readS(entry.Name())
+func TestK1S(t *testing.T) {
+	for _, entry := range td {
+		content, err := read(entry.Name())
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := JustCheck(&Config{}, bytes.NewReader(content)); err != nil {
+		result := bytes.Buffer{}
+		if err := Sort(&Config{OrderingOptions{SortKey: &SortKey{TargetField: 1}}, OtherOptions{}}, bytes.NewReader(content), &result); err != nil {
 			t.Fatal(err)
+		}
+		validContent, err := readK1S(entry.Name())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !slices.Equal(validContent, result.Bytes()) {
+			t.Fatalf("differs from valid answer: %s: %q\n !=\n%q", entry.Name(), validContent, result.Bytes())
 		}
 	}
 }
 
-func TestJNS(t *testing.T) {
-	for _, entry := range tdNS {
-		content, err := readNS(entry.Name())
+func TestK2S(t *testing.T) {
+	for _, entry := range td {
+		content, err := read(entry.Name())
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := JustCheck(&Config{OrderingOptions{SortNumeric: true}, OtherOptions{}}, bytes.NewReader(content)); err != nil {
+		result := bytes.Buffer{}
+		if err := Sort(&Config{OrderingOptions{SortKey: &SortKey{TargetField: 2}}, OtherOptions{}}, bytes.NewReader(content), &result); err != nil {
 			t.Fatal(err)
 		}
-	}
-}
-
-func TestJUS(t *testing.T) {
-	for _, entry := range tdUS {
-		content, err := readUS(entry.Name())
+		validContent, err := readK2S(entry.Name())
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := JustCheck(&Config{OrderingOptions{}, OtherOptions{UniqueOnly: true}}, bytes.NewReader(content)); err != nil {
-			t.Fatal(err)
-		}
-	}
-}
-
-func TestJRS(t *testing.T) {
-	for _, entry := range tdRS {
-		content, err := readRS(entry.Name())
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := JustCheck(&Config{OrderingOptions{Reverse: true}, OtherOptions{}}, bytes.NewReader(content)); err != nil {
-			t.Fatal(err)
-		}
-	}
-}
-
-func TestJRUS(t *testing.T) {
-	for _, entry := range tdRUS {
-		content, err := readRUS(entry.Name())
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := JustCheck(&Config{OrderingOptions{Reverse: true}, OtherOptions{UniqueOnly: true}}, bytes.NewReader(content)); err != nil {
-			t.Fatal(err)
-		}
-	}
-}
-
-func TestJRNS(t *testing.T) {
-	for _, entry := range tdRNS {
-		content, err := readRNS(entry.Name())
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := JustCheck(&Config{OrderingOptions{Reverse: true, SortNumeric: true}, OtherOptions{}}, bytes.NewReader(content)); err != nil {
-			t.Fatal(err)
-		}
-	}
-}
-
-func TestJNUS(t *testing.T) {
-	for _, entry := range tdNUS {
-		content, err := readNUS(entry.Name())
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := JustCheck(&Config{OrderingOptions{SortNumeric: true}, OtherOptions{UniqueOnly: true}}, bytes.NewReader(content)); err != nil {
-			t.Fatal(err)
+		if !slices.Equal(validContent, result.Bytes()) {
+			t.Fatalf("differs from valid answer: %s: %q\n !=\n%q", entry.Name(), validContent, result.Bytes())
 		}
 	}
 }

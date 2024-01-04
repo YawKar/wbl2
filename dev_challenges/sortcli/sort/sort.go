@@ -22,44 +22,22 @@ func getLines(r io.Reader) (lines []string) {
 }
 
 func Sort(c *Config, r io.Reader, w io.Writer) error {
+	lines := getLines(r)
+	var linesIxs []int
 	switch {
 	case c.SortNumeric:
-		if err := sortNumeric(c, r, w); err != nil {
-			return err
-		}
+		linesIxs = sortNumeric(c, lines)
+	case c.SortKey != nil:
+		linesIxs = sortKey(c, lines)
+	case c.SortHumanNumeric:
+		panic("unimpl")
+	case c.SortMonth:
+		panic("unimpl")
 	default:
-		if err := sortStandard(c, r, w); err != nil {
-			return err
-		}
+		linesIxs = sortStandard(c, lines)
 	}
-	return nil
-}
-
-func sortStandard(c *Config, r io.Reader, w io.Writer) error {
-	lines := getLines(r)
-	sortFunc := strings.Compare
-	if c.IgnoreLeadingBlanks {
-		sortFunc = wrapIgnoreLeadingBlanks(sortFunc)
-	}
-	if c.Reverse {
-		sortFunc = wrapReverse(sortFunc)
-	}
-	slices.SortStableFunc(lines, sortFunc)
-
-	if c.UniqueOnly {
-		unique := make([]string, 0)
-		if len(lines) > 0 {
-			unique = append(unique, lines[0])
-		}
-		for i := 1; i < len(lines); i++ {
-			if sortFunc(lines[i], lines[i-1]) != 0 {
-				unique = append(unique, lines[i])
-			}
-		}
-		lines = unique
-	}
-	for _, line := range lines {
-		_, err := fmt.Fprintln(w, line)
+	for _, pos := range linesIxs {
+		_, err := fmt.Fprintln(w, lines[pos])
 		if err != nil {
 			return err
 		}
@@ -67,10 +45,135 @@ func sortStandard(c *Config, r io.Reader, w io.Writer) error {
 	return nil
 }
 
-func sortNumeric(c *Config, r io.Reader, w io.Writer) error {
-	lines := getLines(r)
+func sortKey(c *Config, lines []string) []int {
+	targetField := c.SortKey.TargetField
+	targetFieldIsOk := func() bool {
+		for _, line := range lines {
+			fields := strings.Fields(line)
+			if len(fields) >= targetField {
+				return true
+			}
+		}
+		return false
+	}()
+	type sIx struct {
+		ix int
+		s  string
+	}
+	sortFunc := func(s1, s2 sIx) int {
+		if targetFieldIsOk {
+			getTargetFieldAndRest := func(s string, targetField int) (string, string) {
+				for len(s) > 0 && targetField > 0 {
+					targetField--
+					before, after, found := strings.Cut(s, " ")
+					if targetField == 0 {
+						return before, after
+					} else if found {
+						s = strings.TrimLeft(after, " \t")
+					} else {
+						return "", ""
+					}
+				}
+				return "", ""
+			}
+			s1F, s1extra := getTargetFieldAndRest(s1.s, targetField)
+			// fmt.Printf("%q %q %q\n", s1.s, s1F, s1extra)
+			s2F, s2extra := getTargetFieldAndRest(s2.s, targetField)
+			// fmt.Printf("%q %q %q\n", s2.s, s2F, s2extra)
+			if s1F == s2F {
+				return strings.Compare(s1extra, s2extra)
+			}
+			return strings.Compare(s1F, s2F)
+		} else {
+			return strings.Compare(s1.s, s2.s)
+		}
+	}
+	if c.Reverse {
+		prevSortFunc := sortFunc
+		sortFunc = func(s1, s2 sIx) int {
+			return -prevSortFunc(s1, s2)
+		}
+	}
+	linesWithIxs := make([]sIx, len(lines))
+	for i := range linesWithIxs {
+		linesWithIxs[i] = sIx{i, lines[i]}
+	}
+
+	slices.SortStableFunc(linesWithIxs, sortFunc)
+
 	if c.UniqueOnly {
-		unique := make([]string, 0)
+		unique := make([]int, 0)
+		if len(linesWithIxs) > 0 {
+			unique = append(unique, linesWithIxs[0].ix)
+		}
+		for i := 1; i < len(linesWithIxs); i++ {
+			if sortFunc(linesWithIxs[i], linesWithIxs[i-1]) != 0 {
+				unique = append(unique, linesWithIxs[i].ix)
+			}
+		}
+		return unique
+	} else {
+		lineIxs := make([]int, len(linesWithIxs))
+		for i := range linesWithIxs {
+			lineIxs[i] = linesWithIxs[i].ix
+		}
+		return lineIxs
+	}
+}
+
+func sortStandard(c *Config, lines []string) []int {
+	type sIx struct {
+		ix int
+		s  string
+	}
+	sortFunc := func(s1, s2 sIx) int {
+		return strings.Compare(s1.s, s2.s)
+	}
+	if c.IgnoreLeadingBlanks {
+		prevSortFunc := sortFunc
+		sortFunc = func(s1, s2 sIx) int {
+			return prevSortFunc(
+				sIx{s1.ix, strings.TrimLeftFunc(s1.s, unicode.IsSpace)},
+				sIx{s2.ix, strings.TrimLeftFunc(s2.s, unicode.IsSpace)},
+			)
+		}
+	}
+	if c.Reverse {
+		prevSortFunc := sortFunc
+		sortFunc = func(s1, s2 sIx) int {
+			return -prevSortFunc(s1, s2)
+		}
+	}
+	linesWithIxs := make([]sIx, len(lines))
+	for i := range linesWithIxs {
+		linesWithIxs[i] = sIx{i, lines[i]}
+	}
+
+	slices.SortStableFunc(linesWithIxs, sortFunc)
+
+	if c.UniqueOnly {
+		unique := make([]int, 0)
+		if len(linesWithIxs) > 0 {
+			unique = append(unique, linesWithIxs[0].ix)
+		}
+		for i := 1; i < len(linesWithIxs); i++ {
+			if sortFunc(linesWithIxs[i], linesWithIxs[i-1]) != 0 {
+				unique = append(unique, linesWithIxs[i].ix)
+			}
+		}
+		return unique
+	} else {
+		lineIxs := make([]int, len(linesWithIxs))
+		for i := range linesWithIxs {
+			lineIxs[i] = linesWithIxs[i].ix
+		}
+		return lineIxs
+	}
+}
+
+func sortNumeric(c *Config, lines []string) []int {
+	if c.UniqueOnly {
+		unique := make([]int, 0)
 		{
 			seen := make(map[string]int)
 			for i := range lines {
@@ -90,14 +193,22 @@ func sortNumeric(c *Config, r io.Reader, w io.Writer) error {
 			}
 			slices.SortFunc(seenKeys, (*big.Int).Cmp)
 			for _, key := range seenKeys {
-				unique = append(unique, lines[seen[key.String()]])
+				unique = append(unique, seen[key.String()])
 			}
 		}
-		lines = unique
+		return unique
 	} else {
-		numericSorter := func(s1, s2 string) int {
-			s1Num, s1Rest, s1Ok := getNumericPrefAndRest(s1)
-			s2Num, s2Rest, s2Ok := getNumericPrefAndRest(s2)
+		type sIx struct {
+			ix int
+			s  string
+		}
+		linesWithIxs := make([]sIx, len(lines))
+		for i := range lines {
+			linesWithIxs[i] = sIx{i, lines[i]}
+		}
+		numericSorter := func(s1, s2 sIx) int {
+			s1Num, s1Rest, s1Ok := getNumericPrefAndRest(s1.s)
+			s2Num, s2Rest, s2Ok := getNumericPrefAndRest(s2.s)
 			if numCmp := s1Num.Cmp(s2Num); numCmp != 0 {
 				return numCmp
 			} else if s1Ok != s2Ok {
@@ -111,20 +222,27 @@ func sortNumeric(c *Config, r io.Reader, w io.Writer) error {
 			}
 		}
 		if c.IgnoreLeadingBlanks {
-			numericSorter = wrapIgnoreLeadingBlanks(numericSorter)
+			prevSortFunc := numericSorter
+			numericSorter = func(s1, s2 sIx) int {
+				return prevSortFunc(
+					sIx{s1.ix, strings.TrimLeftFunc(s1.s, unicode.IsSpace)},
+					sIx{s2.ix, strings.TrimLeftFunc(s2.s, unicode.IsSpace)},
+				)
+			}
 		}
 		if c.Reverse {
-			numericSorter = wrapReverse(numericSorter)
+			prevSortFunc := numericSorter
+			numericSorter = func(s1, s2 sIx) int {
+				return -prevSortFunc(s1, s2)
+			}
 		}
-		slices.SortStableFunc(lines, numericSorter)
-	}
-	for _, line := range lines {
-		_, err := fmt.Fprintln(w, line)
-		if err != nil {
-			return err
+		slices.SortStableFunc(linesWithIxs, numericSorter)
+		lineIxs := make([]int, len(linesWithIxs))
+		for i := range lineIxs {
+			lineIxs[i] = linesWithIxs[i].ix
 		}
+		return lineIxs
 	}
-	return nil
 }
 
 func wrapIgnoreLeadingBlanks(f func(string, string) int) func(string, string) int {
@@ -141,12 +259,18 @@ func wrapReverse(f func(string, string) int) func(string, string) int {
 
 func getNumericPrefAndRest(s string) (*big.Int, string, bool) {
 	sNonNumericIx := strings.IndexFunc(s, func(r rune) bool { return !(unicode.IsDigit(r) || r == '+' || r == '-') })
-	if sNonNumericIx == -1 {
-		return &big.Int{}, s, false
-	}
 	sPrefNum := &big.Int{}
-	if err := sPrefNum.UnmarshalText([]byte(s[:sNonNumericIx])); err != nil {
-		return &big.Int{}, s, false
+	if sNonNumericIx == -1 {
+		if err := sPrefNum.UnmarshalText([]byte(s)); err != nil {
+			return &big.Int{}, s, false
+		} else {
+			return sPrefNum, "", true
+		}
+	} else {
+		if err := sPrefNum.UnmarshalText([]byte(s[:sNonNumericIx])); err != nil {
+			return &big.Int{}, s, false
+		} else {
+			return sPrefNum, s[sNonNumericIx:], true
+		}
 	}
-	return sPrefNum, s[sNonNumericIx:], true
 }

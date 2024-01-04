@@ -1,9 +1,10 @@
 -123
-1 lol
+-123
 30 abc
 30 ac
-30 elem
-343 lr
 40,Hel b
 c c
+30 elem
+1 lol
+343 lr
 r r
