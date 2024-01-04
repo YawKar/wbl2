@@ -27,6 +27,10 @@ jobs:
     - name: Add all modules to workspace
       run: go work use -r .
 
+    - name: Generate tests
+      working-directory: ./dev_challenges/sortcli/sort/testdata
+      run: ./generate_from_samples.sh
+
     - name: Vet patterns
       run: go vet ./patterns/**
 
