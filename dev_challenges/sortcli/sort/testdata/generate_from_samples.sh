@@ -6,6 +6,8 @@ RS_DIR="./reverse_sorted_samples"
 US_DIR="./unique_sorted_samples"
 NS_DIR="./numeric_sorted_samples"
 RUS_DIR="./reverse_unique_sorted_samples"
+RNS_DIR="./reverse_numeric_sorted_samples"
+NUS_DIR="./numeric_unique_sorted_samples"
 
 checkCWDIsTestData() {
   local cwdName="$(basename "$PWD")"
@@ -30,6 +32,12 @@ cleanAndMkGenDirs() {
 
   rm -rf "$RUS_DIR"
   mkdir "$RUS_DIR"
+
+  rm -rf "$RNS_DIR"
+  mkdir "$RNS_DIR"
+
+  rm -rf "$NUS_DIR"
+  mkdir "$NUS_DIR"
 }
 
 g_S() {
@@ -67,6 +75,20 @@ g_RUS() {
   sort -r -u "$1" > "$filePath"
 }
 
+g_RNS() {
+  local dirName="$RNS_DIR"
+  local sampleFileName="$(basename "$1")"
+  local filePath=""$dirName"/"$sampleFileName""
+  sort -r -n "$1" > "$filePath"
+}
+
+g_NUS() {
+  local dirName="$NUS_DIR"
+  local sampleFileName="$(basename "$1")"
+  local filePath=""$dirName"/"$sampleFileName""
+  sort -n -u "$1" > "$filePath"
+}
+
 checkCWDIsTestData
 cleanAndMkGenDirs
 
@@ -77,5 +99,7 @@ for file in ./samples/*; do
       g_US "$file"
       g_NS "$file"
       g_RUS "$file"
+      g_RNS "$file"
+      g_NUS "$file"
     fi
 done

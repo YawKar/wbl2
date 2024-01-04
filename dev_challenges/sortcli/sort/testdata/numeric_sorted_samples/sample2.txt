@@ -1,7 +1,10 @@
 -123 Pi
 -12.
+c
 r
 1 lol
+30 abc
+30 ac
 30 elem
 40,Hel
 343 lr

@@ -36,6 +36,10 @@ var (
 	tdRS []fs.DirEntry
 	// reverse unique sorted samples
 	tdRUS []fs.DirEntry
+	// reverse numeric sorted samples
+	tdRNS []fs.DirEntry
+	// numeric unique sorted samples
+	tdNUS []fs.DirEntry
 )
 
 // Read basic sample
@@ -68,6 +72,16 @@ func readRUS(name string) ([]byte, error) {
 	return tdRoot.ReadFile(TESTDATA + "reverse_unique_sorted_samples/" + name)
 }
 
+// Read reverse numeric sorted sample
+func readRNS(name string) ([]byte, error) {
+	return tdRoot.ReadFile(TESTDATA + "reverse_numeric_sorted_samples/" + name)
+}
+
+// Read numeric unique sorted sample
+func readNUS(name string) ([]byte, error) {
+	return tdRoot.ReadFile(TESTDATA + "numeric_unique_sorted_samples/" + name)
+}
+
 func init() {
 	setupSamples()
 }
@@ -98,6 +112,14 @@ func setupSamples() {
 	if err != nil {
 		panic(err)
 	}
+	tdRNS, err = tdRoot.ReadDir("testdata/reverse_numeric_sorted_samples")
+	if err != nil {
+		panic(err)
+	}
+	tdNUS, err = tdRoot.ReadDir("testdata/numeric_unique_sorted_samples")
+	if err != nil {
+		panic(err)
+	}
 }
 
 func TestS(t *testing.T) {
@@ -107,7 +129,7 @@ func TestS(t *testing.T) {
 			t.Fatal(err)
 		}
 		result := bytes.Buffer{}
-		if err := Sort(Config{}, bytes.NewReader(content), &result); err != nil {
+		if err := Sort(&Config{}, bytes.NewReader(content), &result); err != nil {
 			t.Fatal(err)
 		}
 		validContent, err := readS(entry.Name())
@@ -127,7 +149,7 @@ func TestUS(t *testing.T) {
 			t.Fatal(err)
 		}
 		result := bytes.Buffer{}
-		if err := Sort(Config{OrderingOptions{}, OtherOptions{UniqueOnly: true}}, bytes.NewReader(content), &result); err != nil {
+		if err := Sort(&Config{OrderingOptions{}, OtherOptions{UniqueOnly: true}}, bytes.NewReader(content), &result); err != nil {
 			t.Fatal(err)
 		}
 		validContent, err := readUS(entry.Name())
@@ -147,7 +169,7 @@ func TestNS(t *testing.T) {
 			t.Fatal(err)
 		}
 		result := bytes.Buffer{}
-		if err := Sort(Config{OrderingOptions{SortNumeric: true}, OtherOptions{}}, bytes.NewReader(content), &result); err != nil {
+		if err := Sort(&Config{OrderingOptions{SortNumeric: true}, OtherOptions{}}, bytes.NewReader(content), &result); err != nil {
 			t.Fatal(err)
 		}
 		validContent, err := readNS(entry.Name())
@@ -167,7 +189,7 @@ func TestRS(t *testing.T) {
 			t.Fatal(err)
 		}
 		result := bytes.Buffer{}
-		if err := Sort(Config{OrderingOptions{Reverse: true}, OtherOptions{}}, bytes.NewReader(content), &result); err != nil {
+		if err := Sort(&Config{OrderingOptions{Reverse: true}, OtherOptions{}}, bytes.NewReader(content), &result); err != nil {
 			t.Fatal(err)
 		}
 		validContent, err := readRS(entry.Name())
@@ -187,10 +209,50 @@ func TestRUS(t *testing.T) {
 			t.Fatal(err)
 		}
 		result := bytes.Buffer{}
-		if err := Sort(Config{OrderingOptions{Reverse: true}, OtherOptions{UniqueOnly: true}}, bytes.NewReader(content), &result); err != nil {
+		if err := Sort(&Config{OrderingOptions{Reverse: true}, OtherOptions{UniqueOnly: true}}, bytes.NewReader(content), &result); err != nil {
 			t.Fatal(err)
 		}
 		validContent, err := readRUS(entry.Name())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !slices.Equal(validContent, result.Bytes()) {
+			t.Fatalf("differs from valid answer: %s: %q\n !=\n%q", entry.Name(), validContent, result.Bytes())
+		}
+	}
+}
+
+func TestRNS(t *testing.T) {
+	for _, entry := range td {
+		content, err := read(entry.Name())
+		if err != nil {
+			t.Fatal(err)
+		}
+		result := bytes.Buffer{}
+		if err := Sort(&Config{OrderingOptions{Reverse: true, SortNumeric: true}, OtherOptions{}}, bytes.NewReader(content), &result); err != nil {
+			t.Fatal(err)
+		}
+		validContent, err := readRNS(entry.Name())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !slices.Equal(validContent, result.Bytes()) {
+			t.Fatalf("differs from valid answer: %s: %q\n !=\n%q", entry.Name(), validContent, result.Bytes())
+		}
+	}
+}
+
+func TestNUS(t *testing.T) {
+	for _, entry := range td {
+		content, err := read(entry.Name())
+		if err != nil {
+			t.Fatal(err)
+		}
+		result := bytes.Buffer{}
+		if err := Sort(&Config{OrderingOptions{SortNumeric: true}, OtherOptions{UniqueOnly: true}}, bytes.NewReader(content), &result); err != nil {
+			t.Fatal(err)
+		}
+		validContent, err := readNUS(entry.Name())
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -206,7 +268,19 @@ func TestJS(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := JustCheck(Config{}, bytes.NewReader(content)); err != nil {
+		if err := JustCheck(&Config{}, bytes.NewReader(content)); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestJNS(t *testing.T) {
+	for _, entry := range tdNS {
+		content, err := readNS(entry.Name())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := JustCheck(&Config{OrderingOptions{SortNumeric: true}, OtherOptions{}}, bytes.NewReader(content)); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -218,7 +292,7 @@ func TestJUS(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := JustCheck(Config{OrderingOptions{}, OtherOptions{UniqueOnly: true}}, bytes.NewReader(content)); err != nil {
+		if err := JustCheck(&Config{OrderingOptions{}, OtherOptions{UniqueOnly: true}}, bytes.NewReader(content)); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -230,7 +304,7 @@ func TestJRS(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := JustCheck(Config{OrderingOptions{Reverse: true}, OtherOptions{}}, bytes.NewReader(content)); err != nil {
+		if err := JustCheck(&Config{OrderingOptions{Reverse: true}, OtherOptions{}}, bytes.NewReader(content)); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -242,7 +316,31 @@ func TestJRUS(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := JustCheck(Config{OrderingOptions{Reverse: true}, OtherOptions{UniqueOnly: true}}, bytes.NewReader(content)); err != nil {
+		if err := JustCheck(&Config{OrderingOptions{Reverse: true}, OtherOptions{UniqueOnly: true}}, bytes.NewReader(content)); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestJRNS(t *testing.T) {
+	for _, entry := range tdRNS {
+		content, err := readRNS(entry.Name())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := JustCheck(&Config{OrderingOptions{Reverse: true, SortNumeric: true}, OtherOptions{}}, bytes.NewReader(content)); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestJNUS(t *testing.T) {
+	for _, entry := range tdNUS {
+		content, err := readNUS(entry.Name())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := JustCheck(&Config{OrderingOptions{SortNumeric: true}, OtherOptions{UniqueOnly: true}}, bytes.NewReader(content)); err != nil {
 			t.Fatal(err)
 		}
 	}
