@@ -36,7 +36,13 @@ jobs:
         uses: golangci/golangci-lint-action@v3
         with:
           version: v1.55
-          args: dev_challenges/*
+          args: dev_challenges/**/
+
+      - name: Lint dev_challenges (2nd layer)
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.55
+          args: dev_challenges/**/*/
 
       - name: Lint spoken_tasks
         uses: golangci/golangci-lint-action@v3
