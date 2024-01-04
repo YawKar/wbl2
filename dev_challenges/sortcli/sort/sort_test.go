@@ -41,10 +41,6 @@ var (
 	tdK1S []fs.DirEntry
 	// k2 sorted samples
 	tdK2S []fs.DirEntry
-	// k3 sorted samples
-	tdK3S []fs.DirEntry
-	// k4 sorted samples
-	tdK4S []fs.DirEntry
 )
 
 // Read basic sample
@@ -97,16 +93,6 @@ func readK2S(name string) ([]byte, error) {
 	return tdRoot.ReadFile(TESTDATA + "k2_sorted_samples/" + name)
 }
 
-// Read k3 sorted sample
-func readK3S(name string) ([]byte, error) {
-	return tdRoot.ReadFile(TESTDATA + "k3_sorted_samples/" + name)
-}
-
-// Read k4 sorted sample
-func readK4S(name string) ([]byte, error) {
-	return tdRoot.ReadFile(TESTDATA + "k4_sorted_samples/" + name)
-}
-
 func init() {
 	setupSamples()
 }
@@ -150,14 +136,6 @@ func setupSamples() {
 		panic(err)
 	}
 	tdK2S, err = tdRoot.ReadDir("testdata/k2_sorted_samples")
-	if err != nil {
-		panic(err)
-	}
-	tdK3S, err = tdRoot.ReadDir("testdata/k3_sorted_samples")
-	if err != nil {
-		panic(err)
-	}
-	tdK4S, err = tdRoot.ReadDir("testdata/k4_sorted_samples")
 	if err != nil {
 		panic(err)
 	}
