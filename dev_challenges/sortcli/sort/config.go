@@ -1,24 +1,28 @@
 package sort
 
 type Config struct {
-	// Action types
-	JustCheck bool
+	OrderingOptions
+	OtherOptions
+}
 
-	// Sort types
-	SortKey          SortKey
+type OrderingOptions struct {
+	SortKey          *SortKey
 	SortNumeric      bool
 	SortMonth        bool
 	SortHumanNumeric bool
 
-	// Sort modifiers
 	Reverse             bool
 	IgnoreLeadingBlanks bool
+}
 
-	// Result modifiers
+type OtherOptions struct {
 	UniqueOnly bool
 }
 
 type SortKey struct {
-	Enabled bool
-	KeyDef  string
+	StartField int
+	StartChar  int
+	StartOpts  *OrderingOptions
+	EndField   int
+	EndChar    int
 }
