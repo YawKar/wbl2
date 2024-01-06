@@ -52,5 +52,5 @@ jobs:
     - name: Test dev challenges
       run: go test -race -v ./dev_challenges/**/
 
-    - name: Test dev challenges (2nd layer)
-      run: go test -race -v ./dev_challenges/**/*/
+    - name: Test dev challenges (sortcli)
+      run: go test -race -v ./dev_challenges/sortcli/...
