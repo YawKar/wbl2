@@ -2,7 +2,10 @@
 	"name": "Ubuntu",
 	"image": "mcr.microsoft.com/devcontainers/base:jammy",
 	"features": {
-		"ghcr.io/devcontainers/features/go:1": {}
+		"ghcr.io/devcontainers/features/go:1": {},
+		"ghcr.io/azutake/devcontainer-features/go-packages-install:0": {
+			"PACKAGES": "go.uber.org/nilaway/cmd/nilaway@latest"
+		}
 	},
 	"customizations": {
 		"vscode": {

@@ -18,22 +18,28 @@ type CLIConfig struct {
 func main() {
 	c := parseConfigUsingFlags()
 	restArgs := flag.Args()
+	var binName string
+	if len(os.Args) > 0 {
+		binName = filepath.Base(os.Args[0])
+	} else {
+		binName = "sortcli"
+	}
 	if len(restArgs) == 0 {
-		fmt.Fprintf(os.Stderr, "%s: file wasn't provided (make sure it is the last arg)\n", filepath.Base(os.Args[0]))
+		fmt.Fprintf(os.Stderr, "%s: file wasn't provided (make sure it is the last arg)\n", binName)
 		os.Exit(1)
 	}
 	for _, filePath := range restArgs {
 		filePath := filepath.Clean(filePath)
 		if file, err := os.Open(filePath); err != nil {
-			fmt.Fprintf(os.Stderr, "%s: file wasn't found: %s\n", filepath.Base(os.Args[0]), filePath)
+			fmt.Fprintf(os.Stderr, "%s: file wasn't found: %s\n", binName, filePath)
 		} else {
 			if c.justCheck {
 				if err := sort.JustCheck(&c.Config, file); err != nil {
-					fmt.Fprintf(os.Stderr, "%s: %s: %s\n", filepath.Base(os.Args[0]), filePath, err)
+					fmt.Fprintf(os.Stderr, "%s: %s: %s\n", binName, filePath, err)
 				}
 			} else {
 				if err := sort.Sort(&c.Config, file, os.Stdout); err != nil {
-					fmt.Fprintf(os.Stderr, "%s: %s: %s\n", filepath.Base(os.Args[0]), filePath, err)
+					fmt.Fprintf(os.Stderr, "%s: %s: %s\n", binName, filePath, err)
 				}
 			}
 		}
