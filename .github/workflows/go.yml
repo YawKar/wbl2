@@ -11,7 +11,7 @@ on:
 
 jobs:
 
-  build:
+  build-vet-test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -28,8 +28,8 @@ jobs:
       run: go work use -r .
 
     - name: Generate tests
-      working-directory: ./pkg/chllngs/testdata/
-      run: ./generate_from_samples.sh
+      working-directory: ./pkg/chllngs/sort/testdata
+      run: chmod +x generate_from_samples.sh; ./generate_from_samples.sh
 
     - name: Build
       run: go build -v ./...
