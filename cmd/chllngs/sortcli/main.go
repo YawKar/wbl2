@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/yawkar/wbl2/dev_challenges/sortcli/sort"
+	"github.com/yawkar/wbl2/pkg/chllngs/sort"
 )
 
 type CLIConfig struct {

@@ -28,7 +28,4 @@ jobs:
       run: go install go.uber.org/nilaway/cmd/nilaway@latest
 
     - name: Run nilaway on dev_challenges
-      run: nilaway ./dev_challenges/**
-
-    - name: Run nilaway on dev_challenges/sortcli/
-      run: nilaway ./dev_challenges/sortcli/...
+      run: nilaway ./...

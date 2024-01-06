@@ -28,29 +28,14 @@ jobs:
       run: go work use -r .
 
     - name: Generate tests
-      working-directory: ./dev_challenges/sortcli/sort/testdata
+      working-directory: ./pkg/chllngs/testdata/
       run: ./generate_from_samples.sh
 
-    - name: Vet patterns
-      run: go vet ./patterns/**
+    - name: Build
+      run: go build -v ./...
 
-    - name: Build patterns
-      run: go build -v ./patterns/**
+    - name: Vet
+      run: go vet ./...
 
-    - name: Vet dev challenges
-      run: go vet ./dev_challenges/**
-
-    - name: Build dev challenges
-      run: go build -v ./dev_challenges/**
-
-    - name: Vet spoken tasks
-      run: go vet ./spoken_tasks/**
-
-    - name: Build spoken tasks
-      run: go build -v ./spoken_tasks/**
-
-    - name: Test dev challenges
-      run: go test -race -v ./dev_challenges/**/
-
-    - name: Test dev challenges (sortcli)
-      run: go test -race -v ./dev_challenges/sortcli/...
+    - name: Test
+      run: go test -race -v ./...
