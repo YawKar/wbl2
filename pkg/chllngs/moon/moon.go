@@ -13,7 +13,7 @@ type Shell struct {
 
 type ErrorCode uint8
 
-func (sh *Shell) env(o io.Writer, e io.Writer) ErrorCode {
+func (sh *Shell) Env(o io.Writer, e io.Writer) ErrorCode {
 	const (
 		Success ErrorCode = iota
 		ErrPrintEnv
@@ -24,7 +24,7 @@ func (sh *Shell) env(o io.Writer, e io.Writer) ErrorCode {
 	return Success
 }
 
-func (sh *Shell) cd(args []string, e io.Writer) ErrorCode {
+func (sh *Shell) Cd(args []string, e io.Writer) ErrorCode {
 	const (
 		Success ErrorCode = iota
 		ErrPWDIsUnset
@@ -69,7 +69,7 @@ func (sh *Shell) cd(args []string, e io.Writer) ErrorCode {
 	}
 }
 
-func (sh *Shell) echo(args []string, o io.Writer, e io.Writer) ErrorCode {
+func (sh *Shell) Echo(args []string, o io.Writer, e io.Writer) ErrorCode {
 	const (
 		Success ErrorCode = iota
 	)
